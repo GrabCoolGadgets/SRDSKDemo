@@ -10,3 +10,4 @@ shortzy
 aiofiles
 beautifulsoup4
 python-Levenshtein
+flask
