@@ -90,9 +90,10 @@ async def pm_filter(c, m: t.Message):
                 id=result.id
             ) if link else None
 
-        if text_ := temp:
-            bin_text += text_
-            i += 1
+             
+                if text_ := temp:
+                bin_text += text_
+                i += 1
 
         if not bin_text:
             await not_found_response(sts, query)
