@@ -265,7 +265,7 @@ async def short_from_text(api_key, base_site, text):
       
     if bool(api_key and base_site):
         shortzy = Shortzy(api_key, base_site)
-        print(await shortzy.convert_from_text(text, silently_fail=True))
+
         return await shortzy.convert_from_text(text, silently_fail=True)
     else:
         return text
