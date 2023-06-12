@@ -71,3 +71,11 @@ Once these environment variables are set, you can start using Movie Bot.
 To use Movie Bot, simply type in the name of the movie you're looking for and the bot will search for it. It will provide you with links to download the movie, and you can also use the Shortener feature to shorten long download links.
 
 You can also use the bot to set a validity
+
+## Host Bot
+
+### Deploy to Heroku
+
+Click Below Button to Deploy to Heroku:
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Adultmazak/SDWB2)
