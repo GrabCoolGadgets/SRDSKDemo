@@ -6,7 +6,7 @@ python-dotenv
 aiohttp
 telegraph[aio]
 fuzzywuzzy
-shortzy=0.0.8
+shortzy==0.0.8
 aiofiles
 beautifulsoup4
 python-Levenshtein
