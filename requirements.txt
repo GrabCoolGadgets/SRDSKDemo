@@ -11,4 +11,3 @@ aiofiles
 beautifulsoup4
 python-Levenshtein
 flask
-_sqlite3
