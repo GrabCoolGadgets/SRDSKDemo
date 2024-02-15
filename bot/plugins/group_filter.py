@@ -99,7 +99,7 @@ async def pm_filter(c, m: t.Message):
             return
 
         if is_shortener:
-            print(shortner_api,shortner_site,bin_text)
+            print(shortener_api,shortener_site,bin_text)
             bin_text = await short_from_text(shortener_api, shortener_site, bin_text)
 
         text = f"<h3>Results for {query}</h3><br><h4>Total results: {i-1}</h4><br><hr>{bin_text}"
