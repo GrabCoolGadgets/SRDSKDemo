@@ -32,7 +32,7 @@ class Config(object):
 
     LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "0"))
     LIMIT = int(os.environ.get("LIMIT", "30"))
-    UPDATE_CHANNEL = int(os.environ.get("UPDATE_CHANNEL", "0"))
+    UPDATE_CHANNEL = os.environ.get("UPDATE_CHANNEL", "iP_Update")
     BROADCAST_AS_COPY = is_enabled(
         (os.environ.get("BROADCAST_AS_COPY", "False")), False
     )
