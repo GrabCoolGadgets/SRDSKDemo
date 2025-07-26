@@ -21,7 +21,7 @@ async def pm_filter(c, m: t.Message):
 
     if m.text.startswith("/"):
         return  # ignore commands
-    if re.findall("((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", query):
+    if re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", query):
         return
 
     if 2 < len(query) < 100:
