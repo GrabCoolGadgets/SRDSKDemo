@@ -65,17 +65,7 @@ class Config(object):
 class Script(object):
     START_MESSAGE = os.environ.get("START_MESSAGE", "__I'm Official iPopcorn Movies App Files Provider Bot 🤖\nI can only give you the Files that you found in the iPopcorn Movies App.__")
     
-    USER_HELP_MESSAGE = """/start - Used to start the bot.
-/help - get help regarding the bot.
-/about - get information about the bot.
-/index - set a channel to index in a group.
-/auto_delete - check the status of auto delete in a group.
-/set_auto_delete - set the auto delete time in a group.
-/request - request access from the bot owner.
-/info - get information about a group.
-/set_api - set the API in a group.
-/api - get the API from a group.
-/remove_api - remove the API from a group."""
+    USER_HELP_MESSAGE = """__For any Help or Queries! please contact my developer **@RoyalKrrihna** ☕__"""
 
     USER_HELP_MESSAGE = os.environ.get("USER_HELP_MESSAGE", USER_HELP_MESSAGE)
     
