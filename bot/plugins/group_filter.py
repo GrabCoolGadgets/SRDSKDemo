@@ -118,7 +118,7 @@ async def pm_filter(c, m: t.Message):
             [
                 [
                     t.InlineKeyboardButton(
-                        "How to Download?",
+                        "🎯 Join Update Channel 🎯",
                         url=Config.RESULTS_HOW_TO_DOWNLOAD_LINK,
                     ),
                 ],
