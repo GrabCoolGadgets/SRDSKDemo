@@ -27,7 +27,7 @@ async def start(c: Bot, m: types.Message):
             caption = chnl_msg.caption
             caption = remove_mention(remove_link(caption))
             btn = [[types.InlineKeyboardButton(
-                text="How to Download?", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+                text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
 
             reply_markup = types.InlineKeyboardMarkup(
                 btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
