@@ -9,7 +9,13 @@ from bot.database import group_db
 
 
 @Client.on_message(filters.text & (filters.private | filters.group) & filters.incoming)
+@Client.on_message(filters.text & (filters.private | filters.group) & filters.incoming)
 async def pm_filter(c, m: t.Message):
+
+    # 🛑 Block all private messages except owner
+    if m.chat.type == enums.chat_type.ChatType.PRIVATE:
+        if m.from_user.id != Config.OWNER_ID:
+            return  # ignore messages from other users in PM
     
     free_group = True
     if m.chat.type in [enums.chat_type.ChatType.SUPERGROUP, enums.chat_type.ChatType.GROUP]:
