@@ -63,7 +63,7 @@ class Config(object):
 
 
 class Script(object):
-    START_MESSAGE = os.environ.get("START_MESSAGE", "__I'm Your Search Robot 🤖\nI Can Find Your Favourite Movies & Series In File Format.__")
+    START_MESSAGE = os.environ.get("START_MESSAGE", "__I'm Official iPopcorn Movies App Files Provider Bot 🤖\nI can only give you the Files that you found in the iPopcorn Movies App.__")
     
     USER_HELP_MESSAGE = """/start - Used to start the bot.
 /help - get help regarding the bot.
