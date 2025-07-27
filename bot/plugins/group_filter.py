@@ -80,7 +80,7 @@ async def pm_filter(c, m: t.Message):
             link = 0
             if free_group or is_shortener:
                 bot_username = c.username.replace("@", "")
-                link_temp = f"https://doluram.blogspot.com?start=file_"
+                link_temp = f"https://ipfiles.pages.dev?start=file_"
                 link = None
                 if result.document or result.video:
                     title = remove_mention(remove_link(title))
