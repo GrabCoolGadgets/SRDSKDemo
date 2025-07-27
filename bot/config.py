@@ -65,7 +65,7 @@ class Config(object):
 class Script(object):
     START_MESSAGE = os.environ.get("START_MESSAGE", "__I'm Official iPopcorn Movies App Files Provider Bot 🤖\nI can only give you the Files that you found in the iPopcorn Movies App.__")
     
-    USER_HELP_MESSAGE = """__For any Help or Queries! please contact my developer **@RoyalKrrihna** ☕__"""
+    USER_HELP_MESSAGE = """__For any Help or Queries! please contact my developer **@RoyalKrrishna** ☕__"""
 
     USER_HELP_MESSAGE = os.environ.get("USER_HELP_MESSAGE", USER_HELP_MESSAGE)
     
