@@ -9,6 +9,8 @@ from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid
 
 @Client.on_message(filters.command("start") & (filters.private | filters.group) & filters.incoming)
 async def start(c: Bot, m: types.Message):
+    if Config.UPDATE_CHANNEL and await force_sub_func(c, Config.UPDATE_CHANNEL, m) is not True:
+        return
     
     if len(m.command) == 2:
         if "help" in m.command:
