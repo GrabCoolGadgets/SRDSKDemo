@@ -10,88 +10,83 @@ from bot.plugins.forcesub import force_sub_func
 
 @Client.on_message(filters.command("start") & (filters.private | filters.group) & filters.incoming)
 async def start(c: Bot, m: types.Message):
-    """Handles the /start command with no arguments."""
-    markup = types.InlineKeyboardMarkup(
-        [
+    """Handles the /start command."""
+    if Config.UPDATE_CHANNEL and await force_sub_func(c, Config.UPDATE_CHANNEL, m) is not True:
+        return
+
+    if len(m.command) == 2:
+        # Handles two parameters
+        command, arg = m.command
+
+        if "help" in arg:
+            s = Script.ADMIN_HELP_MESSAGE if m.from_user.id in Config.ADMINS else Script.USER_HELP_MESSAGE
+            await m.reply_text(
+                s, disable_web_page_preview=True
+            )
+            return
+
+        # Checks for valid formatting file_id_chat_id
+        if len(arg.split("_")) == 2:
+            try:
+                file_id, chat_id = arg.split("_")
+                chnl_msg = await c.get_messages(int(chat_id), file_id)
+                caption = chnl_msg.caption
+                caption = remove_mention(remove_link(caption))
+                btn = [[types.InlineKeyboardButton(
+                    text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+
+                reply_markup = types.InlineKeyboardMarkup(
+                    btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+                await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup)
+                return
+            except ValueError:
+                await m.reply_text("Please provide valid details: file_id and chat_id.")
+            except Exception as e:
+                print(f"Error retrieving message: {e}")
+                await m.reply_text("Could not retrieve the message, please try again later.")
+        else:
+            # If format file_id_chat_id is incorrect use the name
+            movie_name = arg
+            await search_movie_by_name(c, m, movie_name) # Calls movie by name after validating is different than required format
+
+    else:  # len(m.command) == 1  (just /start)
+        markup = types.InlineKeyboardMarkup(
             [
-                types.InlineKeyboardButton(text="Help", callback_data="help"),
-                types.InlineKeyboardButton(text="About", callback_data="about"),
-            ],
-            [types.InlineKeyboardButton(text="Close", callback_data="delete")],
-        ]
-    )
+                [
+                    types.InlineKeyboardButton(text="Help", callback_data="help"),
+                    types.InlineKeyboardButton(text="About", callback_data="about"),
+                ],
+                [types.InlineKeyboardButton(text="Close", callback_data="delete")],
+            ]
+        )
 
-    await m.reply_text(
-        Script.START_MESSAGE, disable_web_page_preview=True, reply_markup=markup
-    )
+        await m.reply_text(
+            Script.START_MESSAGE, disable_web_page_preview=True, reply_markup=markup
+        )
 
+async def search_movie_by_name(c: Bot, m: types.Message, movie_name: str):
+  """Searches for a movie via name"""
+  try:
+    movie = await bot.database.get_movie_by_name(movie_name) # get_movie_by_name function name should change based on its actual one
+    if movie:
+      file_id = movie["file_id"]
+      chat_id = movie["chat_id"]
+      chnl_msg = await c.get_messages(int(chat_id), file_id)
+      caption = chnl_msg.caption
+      caption = remove_mention(remove_link(caption))
 
-@Client.on_message(filters.command("start") & filters.regex(r"^start (.+?)_([0-9]+)$") & (filters.private | filters.group) & filters.incoming)
-async def start_file_id(c: Bot, m: types.Message):
-    """Handles the /start file_id_chat_id command."""
-    try:
-        _, file_id, chat_id = m.command[1].split("_")
-        chnl_msg = await c.get_messages(int(chat_id), int(file_id))
-        caption = chnl_msg.caption
-        caption = remove_mention(remove_link(caption))
-        btn = [[types.InlineKeyboardButton(
-            text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+      btn = [[types.InlineKeyboardButton(
+                    text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
 
-        reply_markup = types.InlineKeyboardMarkup(
-            btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-        await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup) #Copy in the same chat
-    except ValueError:
-        await m.reply_text("Invalid file_id or chat_id format.")
-    except Exception as e:
-        print(f"Error in start_file_id: {e}")
-        await m.reply_text("An error occurred while processing the request.")
+      reply_markup = types.InlineKeyboardMarkup(
+                    btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+      await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup) # Sends back the relevant file
 
-
-@Client.on_message(filters.command("start") & ~filters.regex(r"^start (.+?)_([0-9]+)$") & (filters.private | filters.group) & filters.incoming)
-async def start_movie_name(c: Bot, m: types.Message):
-    """Handles the /start movie_name command (from the link)."""
-    if len(m.command) == 2:
-        movie_name = m.command[1]
-        # This means the user is clicking the link
-        # Trigger the existing search logic by simulating the correct command
-        await c.send_message(m.chat.id, f"/get {movie_name}") #Triggers the /get handler which handles the logic
     else:
-        await m.reply_text("Please provide a movie name after /start")
-
-
-@Client.on_message(filters.command("get") & (filters.private | filters.group) & filters.incoming)
-async def get_movie(c: Bot, m: types.Message):
-    """Handles the /get movie_name command (the actual search logic)."""
-    if len(m.command) == 2:
-        movie_name = m.command[1]
-        try:
-            # Your old logic goes here, using file_id and chat_id
-            # The new code expects you to have access to function(s) for database interactions.
-            # Adjust those names accordingly as they apply to your existing database
-            movie = await bot.database.get_movie_by_name(movie_name)
-            if movie:
-              file_id = movie["file_id"]
-              chat_id = movie["chat_id"]
-              title = movie["title"]
-              chnl_msg = await c.get_messages(int(chat_id), file_id)
-              caption = chnl_msg.caption
-              caption = remove_mention(remove_link(caption))
-
-              btn = [[types.InlineKeyboardButton(
-                        text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
-
-              reply_markup = types.InlineKeyboardMarkup(
-                        btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-
-              await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup)
-            else:
-              await m.reply_text(f"Movie '{movie_name}' not found.")
-
-        except Exception as e:
-          print(f"Error in get_movie: {e}")
-          await m.reply_text("An error occurred, please try again later.")
-    else:
-       await m.reply_text("Please enter the correct parameters!")
+      await m.reply_text("It seems that file was not found, please specify your query correctly.") # Returns this upon failure
+  except Exception as e:
+    print(f"File failed to pull: {e}")
+    await m.reply_text("An error has occurred, please try again later.") # General return for any exception
 
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
 async def help(c: Client, m: types.Message):
