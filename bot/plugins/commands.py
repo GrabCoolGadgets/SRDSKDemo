@@ -37,8 +37,10 @@ async def start(c: Bot, m: types.Message):
                 return
             except ValueError:
                 # This means it's likely a movie name from the /start command
-                # We just send a message to the user to use the correct format
-                await m.reply_text("Invalid format. Please use /start file_id_chat_id")
+                # The user is clicking the link
+                movie_name = m.command[1]
+                # Trigger the existing search logic by simulating the correct command
+                await m.reply_text(f"/start {movie_name}") # Sends the command to trigger the existing search
                 return
 
     else:  # len(m.command) == 1  (just /start)
@@ -306,30 +308,30 @@ async def showid(client, message: types.Message):
         last = message.from_user.last_name or None
         username = message.from_user.username or None
         dc_id = message.from_user.dc_id or None
-        text = f"<b>âž² First Name:</b> {first}\n<b>âž² Last Name:</b> {last}\n<b>âž² Username:</b> {username}\n<b>âž² Telegram ID:</b> <code>{user_id}</code>\n<b>âž² Data Centre:</b> <code>{dc_id}</code>"
+        text = f"<b>➲ First Name:</b> {first}\n<b>➲ Last Name:</b> {last}\n<b>➲ Username:</b> {username}\n<b>➲ Telegram ID:</b> <code>{user_id}</code>\n<b>➲ Data Centre:</b> <code>{dc_id}</code>"
 
         await message.reply_text(
             text,
             quote=True
         )
 
-    elif chat_type in [enums.chat_type.GROUP, enums.chat_type.SUPERGROUP]:
+    elif chat_type in [enums.ChatType.GROUP, enums.chat_type.SUPERGROUP]:
         _id = ""
         _id += (
-            "<b>âž² Chat ID</b>: "
+            "<b>➲ Chat ID</b>: "
             f"<code>{message.chat.id}</code>\n"
         )
         if message.reply_to_message:
             _id += (
-                "<b>âž² User ID</b>: "
+                "<b>➲ User ID</b>: "
                 f"<code>{message.from_user.id if message.from_user else 'Anonymous'}</code>\n"
-                "<b>âž² Replied User ID</b>: "
+                "<b>➲ Replied User ID</b>: "
                 f"<code>{message.reply_to_message.from_user.id if message.reply_to_message.from_user else 'Anonymous'}</code>\n"
             )
             file_info = get_file_id(message.reply_to_message)
         else:
             _id += (
-                "<b>âž² User ID</b>: "
+                "<b>➲ User ID</b>: "
                 f"<code>{message.from_user.id if message.from_user else 'Anonymous'}</code>\n"
             )
             file_info = get_file_id(message)
