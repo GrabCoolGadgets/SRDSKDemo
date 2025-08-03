@@ -117,8 +117,8 @@ async def find_movies(movie_name: str) -> list:
 
     # For demonstration, let's return some dummy data
     dummy_movies = [
-        {"file_id": "123", "chat_id": "-1001234567890", "title": f"Dummy Movie 1: {movie_name}"},
-        {"file_id": "456", "chat_id": "-1009876543210", "title": f"Dummy Movie 2: {movie_name}"},
+        {"file_id": "123", "chat_id": "-1001502788198", "title": f"Dummy Movie 1: {movie_name}"},
+        {"file_id": "456", "chat_id": "-1001285945634", "title": f"Dummy Movie 2: {movie_name}"},
     ]
     return dummy_movies
 
