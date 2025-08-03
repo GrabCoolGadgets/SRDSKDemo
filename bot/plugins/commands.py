@@ -108,8 +108,8 @@ async def get_movie(c: Bot, m: types.Message):
               btn = [[types.InlineKeyboardButton(
                             text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
 
-              reply_markup = types.InlineKeyboardMarkup(
-                            btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+          reply_markup = types.InlineKeyboardMarkup(
+                        btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
 
               await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup)
             else:
@@ -123,7 +123,7 @@ async def get_movie(c: Bot, m: types.Message):
 
 async def search_movie_by_name(c: Bot, m: types.Message, user_query: str):
     """Searches for a movie via name. This now triggers the /get command handler."""
-    await get_movie(c, m)
+    await get_movie(c, m, user_query)
 
 async def get_movie_from_db(c: Bot, user_query: str) -> dict or None:
     """Searches for movie info in Config.DATABASE_CHANNEL."""
@@ -312,7 +312,7 @@ async def premium_groups(c: Client, m: types.Message):
             print(e)
 
     bin_text = bin_text or "None"
-    text = f"List of premium groups - Total {total_premium_groups} groups\n\n"
+    text = f"List of premium groups - Total {premium_groups} groups\n\n"
     await m.reply(text+bin_text)
 
 
@@ -467,5 +467,5 @@ async def dlfrwdlg(_, m: types.Message):
     await m.delete()
     
 @Client.on_message(filters.regex("Livegram Ads"))
-async def dlllivegram(_, m: types.Message):
+async def dllivegram(_, m: types.Message):
     await m.delete()
