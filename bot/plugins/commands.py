@@ -39,10 +39,10 @@ async def start(c: Bot, m: types.Message):
             # If split fails, assume it's a movie name and proceed to search
             movie_name = m.command[1]
             await m.reply_text(f"Searching for: {movie_name}")
-            await search_movie(c, m, movie_name) # Call the search function
+            await search_movie(c, m, movie_name)  # Call the search function
             return
 
-    else: # len(m.command) == 1  (just /start)
+    else:  # len(m.command) == 1  (just /start)
         markup = types.InlineKeyboardMarkup(
             [
                 [
@@ -61,27 +61,14 @@ async def start(c: Bot, m: types.Message):
 async def search_movie(c: Bot, m: types.Message, movie_name: str):
     """
     Searches for movies based on the given movie name.
-
-    This is a placeholder function.  You need to implement the actual movie search logic here.
     """
-    # IMPLEMENT YOUR MOVIE SEARCH LOGIC HERE
-    # Example:
-    # - Search in your database
-    # - Call an external API
-    # - Use a combination of methods
-
-    # For demonstration purposes, let's assume you have a function `find_movies`
-    # that returns a list of dictionaries, where each dictionary represents a movie.
-
-    # Replace this with your actual movie search function
-    results = await find_movies(movie_name)
+    results = await find_movies(c, movie_name)
 
     if results:
         for movie in results:
-            # Replace these placeholders with the actual data from your `movie` dictionary
             file_id = movie.get("file_id")
             chat_id = movie.get("chat_id")
-            title = movie.get("title")  # Movie title for display
+            title = movie.get("title")
 
             if file_id and chat_id:
                 try:
@@ -95,32 +82,61 @@ async def search_movie(c: Bot, m: types.Message, movie_name: str):
                     reply_markup = types.InlineKeyboardMarkup(
                         btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
 
-                    await chnl_msg.copy(m.chat.id, caption=f"**{title}**\n\n{caption}", reply_markup=reply_markup)  # Copy the message with title
+                    await chnl_msg.copy(m.chat.id, caption=f"**{title}**\n\n{caption}", reply_markup=reply_markup)
                 except Exception as e:
-                    await m.reply_text(f"Error displaying movie: {title} - {e}") #Handle any error
+                    import traceback
+                    traceback.print_exc()
+                    await m.reply_text(f"Error displaying movie: {title} - {type(e).__name__}: {e}")
             else:
                 await m.reply_text(f"Movie found: {title}, but file_id or chat_id is missing.")
     else:
         await m.reply_text(f"No movies found for '{movie_name}'.")
 
 
-async def find_movies(movie_name: str) -> list:
+async def find_movies(c: Bot, movie_name: str) -> list:
     """
-    Placeholder function for searching movies. Replace with your actual database query or API call.
+    Searches for movies in the database channel.
 
-    Returns a list of dictionaries, where each dictionary represents a movie with 'file_id', 'chat_id', and 'title'.
+    Assumes that Config.DATABASE_CHANNEL is the chat ID of the channel
+    where movie information is stored.
     """
-    # Replace this with your actual movie search logic!
-    # Example (replace with your database/API call):
-    # movies = await your_database.search(movie_name)
-    # return movies
+    try:
+        #  c.search_messages(chat_id, query="",limit=)
+        messages = await c.search_messages(
+            chat_id=Config.DATABASE_CHANNEL,
+            query=movie_name,
+            limit=20  # Adjust the limit as needed.  Return at most 20 results.
+        )
 
-    # For demonstration, let's return some dummy data
-    dummy_movies = [
-        {"file_id": "123", "chat_id": "-1001502788198", "title": f"Dummy Movie 1: {movie_name}"},
-        {"file_id": "456", "chat_id": "-1001285945634", "title": f"Dummy Movie 2: {movie_name}"},
-    ]
-    return dummy_movies
+        results = []
+        for msg in messages:
+            # Assuming each message in the channel contains the movie
+            # information in the caption or text.  You might need to
+            # adjust this based on how your data is structured.  Crucially,
+            # you need to reliably extract file_id, chat_id, and title
+            # from the message.
+
+            file_id = None
+            if msg.photo:
+                file_id = msg.photo.file_id
+            elif msg.video:
+                file_id = msg.video.file_id
+            elif msg.document:
+                file_id = msg.document.file_id
+            # Add other media types as needed (audio, animation, etc.)
+
+            if file_id:
+                title = movie_name  # Use the search term as the title
+                chat_id = Config.DATABASE_CHANNEL #The movies are located in DATABASE_CHANNEL
+                results.append({"file_id": file_id, "chat_id": chat_id, "title": title})
+            else:
+                print(f"Warning: No file_id found in message: {msg.id}")
+
+        return results
+
+    except Exception as e:
+        print(f"Error searching messages in database channel: {e}")
+        return []  # Return an empty list in case of an error
 
 
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
@@ -135,7 +151,7 @@ async def help(c: Client, m: types.Message):
 async def help_group(c: Client, m: types.Message):
     text = "Contact me in PM for help!"
     btn = [[types.InlineKeyboardButton(
-        text="Click me for help", url=f"https://t.me/{c.username.replace('@', '')}?start=help")]]
+        text="Click me for help", url=f"https://t.me/{c.username.replace('@','')}?start=help")]]
     await m.reply_text(
         text, disable_web_page_preview=True,
         reply_markup=types.InlineKeyboardMarkup(btn)
