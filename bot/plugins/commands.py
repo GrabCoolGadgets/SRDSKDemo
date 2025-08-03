@@ -21,26 +21,25 @@ async def start(c: Bot, m: types.Message):
                 s, disable_web_page_preview=True
             )
             return
+        else:
+            # This is the original logic (file_id and chat_id)
+            try:
+                _, file_id, chat_id = m.command[1].split("_")
+                chnl_msg = await c.get_messages(int(chat_id), int(file_id))
+                caption = chnl_msg.caption
+                caption = remove_mention(remove_link(caption))
+                btn = [[types.InlineKeyboardButton(
+                    text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
 
-        # Handle direct file ID and chat ID link (existing functionality)
-        try:
-            _, file_id, chat_id = m.command[1].split("_")
-            chnl_msg = await c.get_messages(int(chat_id), int(file_id))
-            caption = chnl_msg.caption
-            caption = remove_mention(remove_link(caption))
-            btn = [[types.InlineKeyboardButton(
-                text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
-
-            reply_markup = types.InlineKeyboardMarkup(
-                btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-            await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
-            return
-        except ValueError:
-            # If split fails, assume it's a movie name and proceed to search
-            movie_name = m.command[1]
-            await m.reply_text(f"Searching for: {movie_name}")
-            await search_movie(c, m, movie_name)  # Call the search function
-            return
+                reply_markup = types.InlineKeyboardMarkup(
+                    btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+                await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
+                return
+            except ValueError:
+                # This means it's likely a movie name from the /start command
+                # We just send a message to the user to use the correct format
+                await m.reply_text("Invalid format. Please use /start file_id_chat_id")
+                return
 
     else:  # len(m.command) == 1  (just /start)
         markup = types.InlineKeyboardMarkup(
@@ -56,88 +55,6 @@ async def start(c: Bot, m: types.Message):
         await m.reply_text(
             Script.START_MESSAGE, disable_web_page_preview=True, reply_markup=markup
         )
-
-
-async def search_movie(c: Bot, m: types.Message, movie_name: str):
-    """
-    Searches for movies based on the given movie name.
-    """
-    results = await find_movies(c, movie_name)
-
-    if results:
-        for movie in results:
-            file_id = movie.get("file_id")
-            chat_id = movie.get("chat_id")
-            title = movie.get("title")
-
-            if file_id and chat_id:
-                try:
-                    chnl_msg = await c.get_messages(int(chat_id), file_id)
-                    caption = chnl_msg.caption
-                    caption = remove_mention(remove_link(caption))
-
-                    btn = [[types.InlineKeyboardButton(
-                        text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
-
-                    reply_markup = types.InlineKeyboardMarkup(
-                        btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-
-                    await chnl_msg.copy(m.chat.id, caption=f"**{title}**\n\n{caption}", reply_markup=reply_markup)
-                except Exception as e:
-                    import traceback
-                    traceback.print_exc()
-                    await m.reply_text(f"Error displaying movie: {title} - {type(e).__name__}: {e}")
-            else:
-                await m.reply_text(f"Movie found: {title}, but file_id or chat_id is missing.")
-    else:
-        await m.reply_text(f"No movies found for '{movie_name}'.")
-
-
-async def find_movies(c: Bot, movie_name: str) -> list:
-    """
-    Searches for movies in the database channel.
-
-    This function now tries to identify movie entries based on the format:
-    "Title: <Movie Title>\nFile ID: <file_id>\nChat ID: <chat_id>"
-    """
-    try:
-        messages = await c.search_messages(
-            chat_id=Config.DATABASE_CHANNEL,
-            query=movie_name,
-            limit=50  # Increased limit to 50 to find movie info
-        )
-
-        results = []
-        for msg in messages:
-            if msg.text:
-                # Try to extract movie info from the message text
-                try:
-                    lines = msg.text.splitlines()
-                    title = None
-                    file_id = None
-                    chat_id = None
-
-                    for line in lines:
-                        if line.startswith("Title:"):
-                            title = line.split(":", 1)[1].strip()
-                        elif line.startswith("File ID:"):
-                            file_id = line.split(":", 1)[1].strip()
-                        elif line.startswith("Chat ID:"):
-                            chat_id = line.split(":", 1)[1].strip()
-
-                    if title and file_id and chat_id:
-                        results.append({"file_id": file_id, "chat_id": chat_id, "title": title})
-                    else:
-                        print(f"Warning: Incomplete movie info in message {msg.id}")
-
-                except Exception as e:
-                    print(f"Error parsing movie info from message {msg.id}: {e}")
-
-        return results
-
-    except Exception as e:
-        print(f"Error searching messages in database channel: {e}")
-        return []
 
 
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
@@ -389,30 +306,30 @@ async def showid(client, message: types.Message):
         last = message.from_user.last_name or None
         username = message.from_user.username or None
         dc_id = message.from_user.dc_id or None
-        text = f"<b>➲ First Name:</b> {first}\n<b>➲ Last Name:</b> {last}\n<b>➲ Username:</b> {username}\n<b>➲ Telegram ID:</b> <code>{user_id}</code>\n<b>➲ Data Centre:</b> <code>{dc_id}</code>"
+        text = f"<b>âž² First Name:</b> {first}\n<b>âž² Last Name:</b> {last}\n<b>âž² Username:</b> {username}\n<b>âž² Telegram ID:</b> <code>{user_id}</code>\n<b>âž² Data Centre:</b> <code>{dc_id}</code>"
 
         await message.reply_text(
             text,
             quote=True
         )
 
-    elif chat_type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
+    elif chat_type in [enums.chat_type.GROUP, enums.chat_type.SUPERGROUP]:
         _id = ""
         _id += (
-            "<b>➲ Chat ID</b>: "
+            "<b>âž² Chat ID</b>: "
             f"<code>{message.chat.id}</code>\n"
         )
         if message.reply_to_message:
             _id += (
-                "<b>➲ User ID</b>: "
+                "<b>âž² User ID</b>: "
                 f"<code>{message.from_user.id if message.from_user else 'Anonymous'}</code>\n"
-                "<b>➲ Replied User ID</b>: "
+                "<b>âž² Replied User ID</b>: "
                 f"<code>{message.reply_to_message.from_user.id if message.reply_to_message.from_user else 'Anonymous'}</code>\n"
             )
             file_info = get_file_id(message.reply_to_message)
         else:
             _id += (
-                "<b>➲ User ID</b>: "
+                "<b>âž² User ID</b>: "
                 f"<code>{message.from_user.id if message.from_user else 'Anonymous'}</code>\n"
             )
             file_info = get_file_id(message)
@@ -446,5 +363,5 @@ async def dlfrwdlg(_, m: types.Message):
     await m.delete()
     
 @Client.on_message(filters.regex("Livegram Ads"))
-async def dlllivegram(_, m: types.Message):
+async def dllivegram(_, m: types.Message):
     await m.delete()
