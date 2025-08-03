@@ -47,8 +47,8 @@ async def start(c: Bot, m: types.Message):
                 await m.reply_text("Could not retrieve the message, please try again later.")
         else:
             # If format file_id_chat_id is incorrect use the name
-            movie_name = arg
-            await search_movie_by_name(c, m, movie_name) # Calls movie by name after validating is different than required format
+            user_query = arg
+            await search_movie_by_name(c, m, user_query) # Calls movie by name after validating is different than required format
 
     else:  # len(m.command) == 1  (just /start)
         markup = types.InlineKeyboardMarkup(
@@ -65,37 +65,73 @@ async def start(c: Bot, m: types.Message):
             Script.START_MESSAGE, disable_web_page_preview=True, reply_markup=markup
         )
 
-async def search_movie_by_name(c: Bot, m: types.Message, movie_name: str):
-  """Searches for a movie via name"""
-  try:
-    movie = await get_movie_from_db(c, movie_name) # get_movie_by_name function name should change based on its actual one
-    if movie:
-      file_id = movie["file_id"]
-      chat_id = movie["chat_id"]
-      chnl_msg = await c.get_messages(int(chat_id), file_id)
-      caption = chnl_msg.caption
-      caption = remove_mention(remove_link(caption))
+@Client.on_message(filters.command("get") & (filters.private | filters.group) & filters.incoming)
+async def get_movie(c: Bot, m: types.Message):
+  """Handles the /get command (the actual search logic)."""
+  if len(m.command) == 2:
+    user_query = m.command[1]
+    try:
+        # Your old logic goes here, using file_id and chat_id
+        # The new code expects you to have access to function(s) for database interactions.
+        # Adjust those names accordingly as they apply to your existing database
+        # Step 1: First it tries to get movie from existing database logic
+        # This logic must be defined in bot.database,
+        # Ensure the names of the functions correspond with the one you have
+        movie = await bot.database.get_movie_by_name(user_query)
+        if movie:
+          file_id = movie["file_id"]
+          chat_id = movie["chat_id"]
+          title = movie["title"]
+          chnl_msg = await c.get_messages(int(chat_id), file_id)
+          caption = chnl_msg.caption
+          caption = remove_mention(remove_link(caption))
 
-      btn = [[types.InlineKeyboardButton(
-                    text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+          btn = [[types.InlineKeyboardButton(
+                        text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
 
-      reply_markup = types.InlineKeyboardMarkup(
-                    btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-      await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup) # Sends back the relevant file
+          reply_markup = types.InlineKeyboardMarkup(
+                        btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
 
-    else:
-      await m.reply_text("It seems that file was not found, please specify your query correctly.") # Returns this upon failure
-  except Exception as e:
-    print(f"File failed to pull: {e}")
-    await m.reply_text("An error has occurred, please try again later.") # General return for any exception
+          await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup)
+        # Step 2: if it wasn't found by name, maybe we can check message, the existing method with the fileID
+        # if no name works, it can search messages here too
+        else:
+            movie = await get_movie_from_db(c,user_query) #It seems that we need to search with messages because the database does not have it
 
-async def get_movie_from_db(c: Bot, movie_name: str) -> dict or None:
+            if movie:
+              file_id = movie["file_id"]
+              chat_id = movie["chat_id"]
+              chnl_msg = await c.get_messages(int(chat_id), file_id)
+              caption = chnl_msg.caption
+              caption = remove_mention(remove_link(caption))
+
+              btn = [[types.InlineKeyboardButton(
+                            text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+
+              reply_markup = types.InlineKeyboardMarkup(
+                            btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+
+              await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup)
+            else:
+              await m.reply_text(f"Movie '{user_query}' not found.")
+
+    except Exception as e:
+      print(f"Error in get_movie: {e}")
+      await m.reply_text("An error occurred, please try again later.")
+  else:
+     await m.reply_text("Please enter the correct parameters!")
+
+async def search_movie_by_name(c: Bot, m: types.Message, user_query: str):
+    """Searches for a movie via name. This now triggers the /get command handler."""
+    await get_movie(c, m)
+
+async def get_movie_from_db(c: Bot, user_query: str) -> dict or None:
     """Searches for movie info in Config.DATABASE_CHANNEL."""
     try:
-        print(f"Searching for movie: {movie_name} in chat: {Config.DATABASE_CHANNEL}") #DEBUG
+        print(f"Searching for movie: {user_query} in chat: {Config.DATABASE_CHANNEL}") #DEBUG
         messages = await c.search_messages(
             chat_id=Config.DATABASE_CHANNEL,
-            query=movie_name,
+            query=user_query,
             limit=10  # Adjust as needed
         )
 
@@ -154,7 +190,7 @@ async def about(c: Client, m: types.Message):
 
 @Client.on_message(filters.command("index") & filters.group & filters.incoming)
 @group_wrapper
-async def index(c: Bot, m: types.Message):
+async def index(c: Client, m: types.Message):
     grp_id = m.chat.id
     group_info = await group_db.get_group(grp_id)
     text = Script.INDEX_TEXT.format(group_info["index_channel"])
