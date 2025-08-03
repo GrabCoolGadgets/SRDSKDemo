@@ -36,7 +36,7 @@ chnl_msg = results[0]
 caption = chnl_msg.caption
 caption = remove_mention(remove_link(caption))
 
-    btn = [[types.InlineKeyboardButton(
+btn = [[types.InlineKeyboardButton(
         text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
 
     reply_markup = types.InlineKeyboardMarkup(btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
