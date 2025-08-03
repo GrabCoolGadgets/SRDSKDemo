@@ -6,160 +6,48 @@ from bot.database import group_db
 from bot import Bot
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid
 from bot.plugins.forcesub import force_sub_func
-from datetime import datetime
-import time
+
 
 @Client.on_message(filters.command("start") & (filters.private | filters.group) & filters.incoming)
 async def start(c: Bot, m: types.Message):
-    """Handles the /start command."""
     if Config.UPDATE_CHANNEL and await force_sub_func(c, Config.UPDATE_CHANNEL, m) is not True:
         return
-
+    
     if len(m.command) == 2:
-        # Handles two parameters
-        command, arg = m.command
-
-        if "help" in arg:
+        if "help" in m.command:
             s = Script.ADMIN_HELP_MESSAGE if m.from_user.id in Config.ADMINS else Script.USER_HELP_MESSAGE
             await m.reply_text(
                 s, disable_web_page_preview=True
             )
             return
-
-        # Checks for valid formatting file_id_chat_id
-        if len(arg.split("_")) == 2:
-            try:
-                file_id, chat_id = arg.split("_")
-                chnl_msg = await c.get_messages(int(chat_id), file_id)
-                caption = chnl_msg.caption
-                caption = remove_mention(remove_link(caption))
-                btn = [[types.InlineKeyboardButton(
-                    text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
-
-                reply_markup = types.InlineKeyboardMarkup(
-                    btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-                await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup)
-                return
-            except ValueError:
-                await m.reply_text("Please provide valid details: file_id and chat_id.")
-            except Exception as e:
-                print(f"Error retrieving message: {e}")
-                await m.reply_text("Could not retrieve the message, please try again later.")
         else:
-            # If format file_id_chat_id is incorrect use the name
-            user_query = arg
-            await search_movie_by_name(c, m, user_query) # Calls movie by name after validating is different than required format
+            _, file_id, chat_id = m.command[1].split("_")
 
-    else:  # len(m.command) == 1  (just /start)
-        markup = types.InlineKeyboardMarkup(
+            chnl_msg = await c.get_messages(int(chat_id), int(file_id))
+            caption = chnl_msg.caption
+            caption = remove_mention(remove_link(caption))
+            btn = [[types.InlineKeyboardButton(
+                text="ðŸŽ¯ Join Update Channel ðŸŽ¯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+
+            reply_markup = types.InlineKeyboardMarkup(
+                btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+            await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
+        return
+        
+    markup = types.InlineKeyboardMarkup(
+        [
             [
-                [
-                    types.InlineKeyboardButton(text="Help", callback_data="help"),
-                    types.InlineKeyboardButton(text="About", callback_data="about"),
-                ],
-                [types.InlineKeyboardButton(text="Close", callback_data="delete")],
+                types.InlineKeyboardButton(text="Help", callback_data="help"),
+                types.InlineKeyboardButton(text="About", callback_data="about"),
+            ],
+            [types.InlineKeyboardButton(text="Close", callback_data="delete")],
         ]
-        )
+    )
+    
+    await m.reply_text(
+        Script.START_MESSAGE, disable_web_page_preview=True, reply_markup=markup
+    )
 
-        await m.reply_text(
-            Script.START_MESSAGE, disable_web_page_preview=True, reply_markup=markup
-        )
-
-@Client.on_message(filters.command("get") & (filters.private | filters.group) & filters.incoming)
-async def get_movie(c: Bot, m: types.Message):
-  """Handles the /get command (the actual search logic)."""
-  if len(m.command) == 2:
-    user_query = m.command[1]
-    try:
-        # Your old logic goes here, using file_id and chat_id
-        # The new code expects you to have access to function(s) for database interactions.
-        # Adjust those names accordingly as they apply to your existing database
-        # Step 1: First it tries to get movie from existing database logic
-        # This logic must be defined in bot.database,
-        # Ensure the names of the functions correspond with the one you have
-        movie = await bot.database.get_movie_by_name(user_query)
-        if movie:
-          file_id = movie["file_id"]
-          chat_id = movie["chat_id"]
-          title = movie["title"]
-          chnl_msg = await c.get_messages(int(chat_id), file_id)
-          caption = chnl_msg.caption
-          caption = remove_mention(remove_link(caption))
-
-          btn = [[types.InlineKeyboardButton(
-                        text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
-
-          reply_markup = types.InlineKeyboardMarkup(
-                        btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-
-          await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup)
-        # Step 2: if it wasn't found by name, maybe we can check message, the existing method with the fileID
-        # if no name works, it can search messages here too
-        else:
-            movie = await get_movie_from_db(c,user_query) #It seems that we need to search with messages because the database does not have it
-
-            if movie:
-              file_id = movie["file_id"]
-              chat_id = movie["chat_id"]
-              chnl_msg = await c.get_messages(int(chat_id), file_id)
-              caption = chnl_msg.caption
-              caption = remove_mention(remove_link(caption))
-
-              btn = [[types.InlineKeyboardButton(
-                            text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
-
-          reply_markup = types.InlineKeyboardMarkup(
-                        btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-
-              await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup)
-            else:
-              await m.reply_text(f"Movie '{user_query}' not found.")
-
-    except Exception as e:
-      print(f"Error in get_movie: {e}")
-      await m.reply_text("An error occurred, please try again later.")
-  else:
-     await m.reply_text("Please enter the correct parameters!")
-
-async def search_movie_by_name(c: Bot, m: types.Message, user_query: str):
-    """Searches for a movie via name. This now triggers the /get command handler."""
-    await get_movie(c, m, user_query)
-
-async def get_movie_from_db(c: Bot, user_query: str) -> dict or None:
-    """Searches for movie info in Config.DATABASE_CHANNEL."""
-    try:
-        print(f"Searching for movie: {user_query} in chat: {Config.DATABASE_CHANNEL}") #DEBUG
-        messages = await c.search_messages(
-            chat_id=Config.DATABASE_CHANNEL,
-            query=user_query,
-            limit=10  # Adjust as needed
-        )
-
-        print(f"Number of messages found: {len(messages)}") #DEBUG
-
-        for msg in messages:
-            if msg.text:
-                print(f"Message text: {msg.text}") #DEBUG
-                lines = msg.text.splitlines()
-                file_id = None
-                chat_id = None
-                # Looking for the lines that specify file_id and chat_id as was specified in earlier response(s)
-                for line in lines:
-                    if line.startswith("File ID:"):
-                        file_id = line.split(":", 1)[1].strip()
-                        print(f"Found File ID: {file_id}") #DEBUG
-                    elif line.startswith("Chat ID:"):
-                        chat_id = line.split(":", 1)[1].strip()
-                        print(f"Found Chat ID: {chat_id}") #DEBUG
-
-                if file_id and chat_id:
-                    print(f"Movie Found: file_id={file_id}, chat_id={chat_id}") #DEBUG
-                    return {"file_id": file_id, "chat_id": chat_id}
-        print ("No movies found")#DEBUG
-        return None # It returns none because it was not found based on how the previous responses specified
-    except Exception as e:
-      print(f"Message failed to pull {e}")
-      return None
 
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
 async def help(c: Client, m: types.Message):
@@ -173,7 +61,7 @@ async def help(c: Client, m: types.Message):
 async def help_group(c: Client, m: types.Message):
     text = "Contact me in PM for help!"
     btn = [[types.InlineKeyboardButton(
-        text="Click me for help", url=f"https://t.me/{c.username.replace('@','')}")]]
+        text="Click me for help", url=f"https://t.me/{c.username.replace('@', '')}?start=help")]]
     await m.reply_text(
         text, disable_web_page_preview=True,
         reply_markup=types.InlineKeyboardMarkup(btn)
@@ -190,7 +78,7 @@ async def about(c: Client, m: types.Message):
 
 @Client.on_message(filters.command("index") & filters.group & filters.incoming)
 @group_wrapper
-async def index(c: Client, m: types.Message):
+async def index(c: Bot, m: types.Message):
     grp_id = m.chat.id
     group_info = await group_db.get_group(grp_id)
     text = Script.INDEX_TEXT.format(group_info["index_channel"])
@@ -312,11 +200,11 @@ async def premium_groups(c: Client, m: types.Message):
             print(e)
 
     bin_text = bin_text or "None"
-    text = f"List of premium groups - Total {premium_groups} groups\n\n"
+    text = f"List of premium groups - Total {total_premium_groups} groups\n\n"
     await m.reply(text+bin_text)
 
 
-@Client.on_message(filters.command("info") & filters.private & filters.group & filters.incoming)
+@Client.on_message(filters.command("info") & (filters.private | filters.group) & filters.incoming)
 async def info(c: Client, m: types.Message):
     try:
         if (
@@ -326,7 +214,7 @@ async def info(c: Client, m: types.Message):
         ):
             return await m.reply_text("`/info id`")
 
-        elif m.chat.type in [enums.chat_type.ChatType.PRIVATE, enums.chat_type.ChatType.GROUP, enums.chat_type.ChatType.SUPERGROUP]:
+        elif m.chat.type in [enums.chat_type.ChatType.GROUP, enums.chat_type.ChatType.SUPERGROUP]:
             if not await group_admin_check(client=c, message=m, userid=m.from_user.id):
                 return
 
@@ -410,30 +298,30 @@ async def showid(client, message: types.Message):
         last = message.from_user.last_name or None
         username = message.from_user.username or None
         dc_id = message.from_user.dc_id or None
-        text = f"<b>➲ First Name:</b> {first}\n<b>➲ Last Name:</b> {last}\n<b>➲ Username:</b> {username}\n<b>➲ Telegram ID:</b> <code>{user_id}</code>\n<b>➲ Data Centre:</b> <code>{dc_id}</code>"
+        text = f"<b>âž² First Name:</b> {first}\n<b>âž² Last Name:</b> {last}\n<b>âž² Username:</b> {username}\n<b>âž² Telegram ID:</b> <code>{user_id}</code>\n<b>âž² Data Centre:</b> <code>{dc_id}</code>"
 
         await message.reply_text(
             text,
             quote=True
         )
 
-    elif chat_type in [enums.ChatType.GROUP, enums.chat_type.SUPERGROUP]:
+    elif chat_type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
         _id = ""
         _id += (
-            "<b>➲ Chat ID</b>: "
+            "<b>âž² Chat ID</b>: "
             f"<code>{message.chat.id}</code>\n"
         )
         if message.reply_to_message:
             _id += (
-                "<b>➲ User ID</b>: "
+                "<b>âž² User ID</b>: "
                 f"<code>{message.from_user.id if message.from_user else 'Anonymous'}</code>\n"
-                "<b>➲ Replied User ID</b>: "
+                "<b>âž² Replied User ID</b>: "
                 f"<code>{message.reply_to_message.from_user.id if message.reply_to_message.from_user else 'Anonymous'}</code>\n"
             )
             file_info = get_file_id(message.reply_to_message)
         else:
             _id += (
-                "<b>➲ User ID</b>: "
+                "<b>âž² User ID</b>: "
                 f"<code>{message.from_user.id if message.from_user else 'Anonymous'}</code>\n"
             )
             file_info = get_file_id(message)
@@ -467,5 +355,5 @@ async def dlfrwdlg(_, m: types.Message):
     await m.delete()
     
 @Client.on_message(filters.regex("Livegram Ads"))
-async def dllivegram(_, m: types.Message):
+async def dlllivegram(_, m: types.Message):
     await m.delete()
