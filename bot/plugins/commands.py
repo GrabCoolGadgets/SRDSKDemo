@@ -21,18 +21,26 @@ async def start(c: Bot, m: types.Message):
             )
             return
         else:
-            _, file_id, chat_id = m.command[1].split("_")
-
-            chnl_msg = await c.get_messages(int(chat_id), int(file_id))
-            caption = chnl_msg.caption
-            caption = remove_mention(remove_link(caption))
-            btn = [[types.InlineKeyboardButton(
-                text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
-
-            reply_markup = types.InlineKeyboardMarkup(
-                btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-            await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
+    query = m.command[1]
+    
+    # Example: searching using the provided query
+    results = await c.search_messages(chat_id=Config.SEARCH_CHANNEL_ID, query=query, limit=1)
+    
+    if results.total_count == 0:
+        await m.reply("❌ No results found for your query.")
         return
+
+    chnl_msg = results[0]
+    caption = chnl_msg.caption
+    caption = remove_mention(remove_link(caption))
+
+    btn = [[types.InlineKeyboardButton(
+        text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+
+    reply_markup = types.InlineKeyboardMarkup(btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+
+    await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
+    return
         
     markup = types.InlineKeyboardMarkup(
         [
