@@ -21,17 +21,36 @@ async def start(c: Bot, m: types.Message):
             )
             return
         else:
-            _, file_id, chat_id = m.command[1].split("_")
+            if "_" in m.command[1]:
+                # Normal file_id_chat_id format
+                _, file_id, chat_id = m.command[1].split("_")
 
-            chnl_msg = await c.get_messages(int(chat_id), int(file_id))
-            caption = chnl_msg.caption
-            caption = remove_mention(remove_link(caption))
-            btn = [[types.InlineKeyboardButton(
-                text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+                chnl_msg = await c.get_messages(int(chat_id), int(file_id))
+                caption = chnl_msg.caption
+                caption = remove_mention(remove_link(caption))
+                btn = [[types.InlineKeyboardButton(
+                    text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
 
-            reply_markup = types.InlineKeyboardMarkup(
-                btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-            await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
+                reply_markup = types.InlineKeyboardMarkup(
+                    btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+                await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
+
+            else:
+                # Agar input "krrish" jaisa ho — to aap apna search ka logic yaha daal sakte ho
+                user_input = m.command[1].lower()
+
+                results = await c.search_messages(chat_id=Config.INDEX_CHANNEL_ID, query=user_input, limit=1)
+
+                if results:
+                    msg = results[0]
+                    caption = msg.caption or "Here is your file:"
+                    caption = remove_mention(remove_link(caption))
+                    btn = [[types.InlineKeyboardButton(
+                        text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+                    reply_markup = types.InlineKeyboardMarkup(btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+                    await msg.copy(m.from_user.id, caption=caption, reply_markup=reply_markup)
+                else:
+                    await m.reply("No result found for your query.")
         return
         
     markup = types.InlineKeyboardMarkup(
