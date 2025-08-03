@@ -97,46 +97,47 @@ async def find_movies(c: Bot, movie_name: str) -> list:
     """
     Searches for movies in the database channel.
 
-    Assumes that Config.DATABASE_CHANNEL is the chat ID of the channel
-    where movie information is stored.
+    This function now tries to identify movie entries based on the format:
+    "Title: <Movie Title>\nFile ID: <file_id>\nChat ID: <chat_id>"
     """
     try:
-        #  c.search_messages(chat_id, query="",limit=)
         messages = await c.search_messages(
             chat_id=Config.DATABASE_CHANNEL,
             query=movie_name,
-            limit=20  # Adjust the limit as needed.  Return at most 20 results.
+            limit=50  # Increased limit to 50 to find movie info
         )
 
         results = []
         for msg in messages:
-            # Assuming each message in the channel contains the movie
-            # information in the caption or text.  You might need to
-            # adjust this based on how your data is structured.  Crucially,
-            # you need to reliably extract file_id, chat_id, and title
-            # from the message.
+            if msg.text:
+                # Try to extract movie info from the message text
+                try:
+                    lines = msg.text.splitlines()
+                    title = None
+                    file_id = None
+                    chat_id = None
 
-            file_id = None
-            if msg.photo:
-                file_id = msg.photo.file_id
-            elif msg.video:
-                file_id = msg.video.file_id
-            elif msg.document:
-                file_id = msg.document.file_id
-            # Add other media types as needed (audio, animation, etc.)
+                    for line in lines:
+                        if line.startswith("Title:"):
+                            title = line.split(":", 1)[1].strip()
+                        elif line.startswith("File ID:"):
+                            file_id = line.split(":", 1)[1].strip()
+                        elif line.startswith("Chat ID:"):
+                            chat_id = line.split(":", 1)[1].strip()
 
-            if file_id:
-                title = movie_name  # Use the search term as the title
-                chat_id = Config.DATABASE_CHANNEL #The movies are located in DATABASE_CHANNEL
-                results.append({"file_id": file_id, "chat_id": chat_id, "title": title})
-            else:
-                print(f"Warning: No file_id found in message: {msg.id}")
+                    if title and file_id and chat_id:
+                        results.append({"file_id": file_id, "chat_id": chat_id, "title": title})
+                    else:
+                        print(f"Warning: Incomplete movie info in message {msg.id}")
+
+                except Exception as e:
+                    print(f"Error parsing movie info from message {msg.id}: {e}")
 
         return results
 
     except Exception as e:
         print(f"Error searching messages in database channel: {e}")
-        return []  # Return an empty list in case of an error
+        return []
 
 
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
@@ -151,7 +152,7 @@ async def help(c: Client, m: types.Message):
 async def help_group(c: Client, m: types.Message):
     text = "Contact me in PM for help!"
     btn = [[types.InlineKeyboardButton(
-        text="Click me for help", url=f"https://t.me/{c.username.replace('@','')}?start=help")]]
+        text="Click me for help", url=f"https://t.me/{c.username.replace('@','')}")]]
     await m.reply_text(
         text, disable_web_page_preview=True,
         reply_markup=types.InlineKeyboardMarkup(btn)
