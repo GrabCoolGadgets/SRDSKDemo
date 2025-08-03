@@ -30,19 +30,8 @@ async for msg in c.search_messages(chat_id=Config.DATABASE_CHANNEL, query=query,
 
 if not results:
     await m.reply("❌ No results found for your query.")
-    return
-
-chnl_msg = results[0]
-caption = chnl_msg.caption
-caption = remove_mention(remove_link(caption))
-
-btn = [[types.InlineKeyboardButton(
-        text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
-reply_markup = types.InlineKeyboardMarkup(btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-
-await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
-return
-        
+    
+    # Agar result nahi mila, tab markup ke saath reply karna
     markup = types.InlineKeyboardMarkup(
         [
             [
@@ -56,6 +45,18 @@ return
     await m.reply_text(
         Script.START_MESSAGE, disable_web_page_preview=True, reply_markup=markup
     )
+    return  # Return baad mein hona chahiye taaki reply hone ke baad exit ho
+
+# Agar result mil gaya to yeh part chalega
+chnl_msg = results[0]
+caption = chnl_msg.caption
+caption = remove_mention(remove_link(caption))
+
+btn = [[types.InlineKeyboardButton(
+        text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+reply_markup = types.InlineKeyboardMarkup(btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+
+await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
 
 
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
