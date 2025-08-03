@@ -6,7 +6,8 @@ from bot.database import group_db
 from bot import Bot
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid
 from bot.plugins.forcesub import force_sub_func
-
+from datetime import datetime
+import time
 
 @Client.on_message(filters.command("start") & (filters.private | filters.group) & filters.incoming)
 async def start(c: Bot, m: types.Message):
@@ -57,7 +58,7 @@ async def start(c: Bot, m: types.Message):
                     types.InlineKeyboardButton(text="About", callback_data="about"),
                 ],
                 [types.InlineKeyboardButton(text="Close", callback_data="delete")],
-            ]
+        ]
         )
 
         await m.reply_text(
@@ -67,7 +68,7 @@ async def start(c: Bot, m: types.Message):
 async def search_movie_by_name(c: Bot, m: types.Message, movie_name: str):
   """Searches for a movie via name"""
   try:
-    movie = await bot.database.get_movie_by_name(movie_name) # get_movie_by_name function name should change based on its actual one
+    movie = await get_movie_from_db(c, movie_name) # get_movie_by_name function name should change based on its actual one
     if movie:
       file_id = movie["file_id"]
       chat_id = movie["chat_id"]
@@ -87,6 +88,34 @@ async def search_movie_by_name(c: Bot, m: types.Message, movie_name: str):
   except Exception as e:
     print(f"File failed to pull: {e}")
     await m.reply_text("An error has occurred, please try again later.") # General return for any exception
+
+async def get_movie_from_db(c: Bot, movie_name: str) -> dict or None:
+    """Searches for movie info in Config.DATABASE_CHANNEL."""
+    try:
+        messages = await c.search_messages(
+            chat_id=Config.DATABASE_CHANNEL,
+            query=movie_name,
+            limit=10  # Adjust as needed
+        )
+
+        for msg in messages:
+            if msg.text:
+                lines = msg.text.splitlines()
+                file_id = None
+                chat_id = None
+                # Looking for the lines that specify file_id and chat_id as was specified in earlier response(s)
+                for line in lines:
+                    if line.startswith("File ID:"):
+                        file_id = line.split(":", 1)[1].strip()
+                    elif line.startswith("Chat ID:"):
+                        chat_id = line.split(":", 1)[1].strip()
+
+                if file_id and chat_id:
+                    return {"file_id": file_id, "chat_id": chat_id}
+        return None # It returns none because it was not found based on how the previous responses specified
+    except Exception as e:
+      print(f"Message failed to pull {e}")
+      return None
 
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
 async def help(c: Client, m: types.Message):
@@ -253,7 +282,7 @@ async def info(c: Client, m: types.Message):
         ):
             return await m.reply_text("`/info id`")
 
-        elif m.chat.type in [enums.chat_type.ChatType.GROUP, enums.chat_type.ChatType.SUPERGROUP]:
+        elif m.chat.type in [enums.chat_type.ChatType.PRIVATE, enums.chat_type.ChatType.GROUP, enums.chat_type.ChatType.SUPERGROUP]:
             if not await group_admin_check(client=c, message=m, userid=m.from_user.id):
                 return
 
