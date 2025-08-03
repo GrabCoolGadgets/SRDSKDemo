@@ -21,7 +21,7 @@ async def start(c: Bot, m: types.Message):
             )
             return
         else:
-    query = m.command[1]
+            query = m.command[1]
     
     # Example: searching using the provided query
     results = await c.search_messages(chat_id=Config.SEARCH_CHANNEL_ID, query=query, limit=1)
