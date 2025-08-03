@@ -39,7 +39,7 @@ async def start(c: Bot, m: types.Message):
                 # Agar input "krrish" jaisa ho — to aap apna search ka logic yaha daal sakte ho
                 user_input = m.command[1].lower()
 
-                results = await c.search_messages(chat_id=Config.INDEX_CHANNEL_ID, query=user_input, limit=1)
+                results = await c.search_messages(chat_id=Config.DATABASE_CHANNEL, query=user_input, limit=1)
 
                 if results:
                     msg = results[0]
