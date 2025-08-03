@@ -22,16 +22,21 @@ async def start(c: Bot, m: types.Message):
             return
         else:
             query = m.command[1]
-    
-    # Example: searching using the provided query
-    results = []
-async for msg in c.search_messages(chat_id=Config.DATABASE_CHANNEL, query=query, limit=1):
-    results.append(msg)
+            
+            # Yeh sahi jagah hai async for ka
+            results = []
+            async for msg in c.search_messages(chat_id=Config.DATABASE_CHANNEL, query=query, limit=1):
+                results.append(msg)
 
-if not results:
-    await m.reply("❌ No results found for your query.")
-    
-    # Agar result nahi mila, tab markup ke saath reply karna
+            if not results:
+                await m.reply("❌ No results found for your query.")
+                return
+
+            # Result mila to reply ya process karo
+            await m.reply(f"✅ Found: {results[0].text}")
+            return
+
+    # Agar `/start` ke saath koi argument nahi diya to normal welcome bhejna
     markup = types.InlineKeyboardMarkup(
         [
             [
@@ -41,11 +46,9 @@ if not results:
             [types.InlineKeyboardButton(text="Close", callback_data="delete")],
         ]
     )
-    
     await m.reply_text(
         Script.START_MESSAGE, disable_web_page_preview=True, reply_markup=markup
     )
-    return  # Return baad mein hona chahiye taaki reply hone ke baad exit ho
 
 # Agar result mil gaya to yeh part chalega
 chnl_msg = results[0]
