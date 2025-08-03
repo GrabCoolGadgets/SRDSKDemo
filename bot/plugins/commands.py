@@ -42,16 +42,17 @@ async def start(c: Bot, m: types.Message):
                 results = []
 async for msg in c.search_messages(chat_id=Config.DATABASE_CHANNEL, query=user_input, limit=1):
     results.append(msg)
-                if results:
-                    msg = results[0]
-                    caption = msg.caption or "Here is your file:"
-                    caption = remove_mention(remove_link(caption))
-                    btn = [[types.InlineKeyboardButton(
-                        text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
-                    reply_markup = types.InlineKeyboardMarkup(btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-                    await msg.copy(m.from_user.id, caption=caption, reply_markup=reply_markup)
-                else:
-                    await m.reply("No result found for your query.")
+
+if results:
+    msg = results[0]
+    caption = msg.caption or "Here is your file:"
+    caption = remove_mention(remove_link(caption))
+    btn = [[types.InlineKeyboardButton(
+        text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+    reply_markup = types.InlineKeyboardMarkup(btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+    await msg.copy(m.from_user.id, caption=caption, reply_markup=reply_markup)
+else:
+    await m.reply("No result found for your query.")
         return
         
     markup = types.InlineKeyboardMarkup(
