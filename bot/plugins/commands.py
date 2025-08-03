@@ -24,7 +24,7 @@ async def start(c: Bot, m: types.Message):
             query = m.command[1]
     
     # Example: searching using the provided query
-    results = await c.search_messages(chat_id=Config.SEARCH_CHANNEL_ID, query=query, limit=1)
+    results = await c.search_messages(chat_id=Config.DATABASE_CHANNEL, query=query, limit=1)
     
     if results.total_count == 0:
         await m.reply("❌ No results found for your query.")
