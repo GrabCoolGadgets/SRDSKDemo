@@ -24,15 +24,17 @@ async def start(c: Bot, m: types.Message):
             query = m.command[1]
     
     # Example: searching using the provided query
-    results = await c.search_messages(chat_id=Config.DATABASE_CHANNEL, query=query, limit=1)
-    
-    if results.total_count == 0:
-        await m.reply("❌ No results found for your query.")
-        return
+    results = []
+async for msg in c.search_messages(chat_id=Config.DATABASE_CHANNEL, query=query, limit=1):
+    results.append(msg)
 
-    chnl_msg = results[0]
-    caption = chnl_msg.caption
-    caption = remove_mention(remove_link(caption))
+if not results:
+    await m.reply("❌ No results found for your query.")
+    return
+
+chnl_msg = results[0]
+caption = chnl_msg.caption
+caption = remove_mention(remove_link(caption))
 
     btn = [[types.InlineKeyboardButton(
         text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
