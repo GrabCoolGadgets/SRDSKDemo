@@ -33,14 +33,13 @@ async def start(c: Bot, m: types.Message):
 
                 reply_markup = types.InlineKeyboardMarkup(
                     btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-                await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
+                await chnl_msg.copy(m.chat.id, caption, reply_markup=reply_markup)
                 return
             except ValueError:
-                # This means it's likely a movie name from the /start command
-                # The user is clicking the link
+                # This means it's likely a movie name from the /start command (link click)
                 movie_name = m.command[1]
-                # Trigger the existing search logic by simulating the correct command
-                await m.reply_text(f"/start {movie_name}") # Sends the command to trigger the existing search
+                # Trigger the existing search logic by sending the command *as the bot*
+                await c.send_message(m.chat.id, f"/start {movie_name}")
                 return
 
     else:  # len(m.command) == 1  (just /start)
@@ -365,5 +364,5 @@ async def dlfrwdlg(_, m: types.Message):
     await m.delete()
     
 @Client.on_message(filters.regex("Livegram Ads"))
-async def dllivegram(_, m: types.Message):
+async def dlllivegram(_, m: types.Message):
     await m.delete()
