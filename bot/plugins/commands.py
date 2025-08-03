@@ -92,14 +92,18 @@ async def search_movie_by_name(c: Bot, m: types.Message, movie_name: str):
 async def get_movie_from_db(c: Bot, movie_name: str) -> dict or None:
     """Searches for movie info in Config.DATABASE_CHANNEL."""
     try:
+        print(f"Searching for movie: {movie_name} in chat: {Config.DATABASE_CHANNEL}") #DEBUG
         messages = await c.search_messages(
             chat_id=Config.DATABASE_CHANNEL,
             query=movie_name,
             limit=10  # Adjust as needed
         )
 
+        print(f"Number of messages found: {len(messages)}") #DEBUG
+
         for msg in messages:
             if msg.text:
+                print(f"Message text: {msg.text}") #DEBUG
                 lines = msg.text.splitlines()
                 file_id = None
                 chat_id = None
@@ -107,11 +111,15 @@ async def get_movie_from_db(c: Bot, movie_name: str) -> dict or None:
                 for line in lines:
                     if line.startswith("File ID:"):
                         file_id = line.split(":", 1)[1].strip()
+                        print(f"Found File ID: {file_id}") #DEBUG
                     elif line.startswith("Chat ID:"):
                         chat_id = line.split(":", 1)[1].strip()
+                        print(f"Found Chat ID: {chat_id}") #DEBUG
 
                 if file_id and chat_id:
+                    print(f"Movie Found: file_id={file_id}, chat_id={chat_id}") #DEBUG
                     return {"file_id": file_id, "chat_id": chat_id}
+        print ("No movies found")#DEBUG
         return None # It returns none because it was not found based on how the previous responses specified
     except Exception as e:
       print(f"Message failed to pull {e}")
@@ -272,7 +280,7 @@ async def premium_groups(c: Client, m: types.Message):
     await m.reply(text+bin_text)
 
 
-@Client.on_message(filters.command("info") & (filters.private | filters.group) & filters.incoming)
+@Client.on_message(filters.command("info") & filters.private & filters.group & filters.incoming)
 async def info(c: Client, m: types.Message):
     try:
         if (
