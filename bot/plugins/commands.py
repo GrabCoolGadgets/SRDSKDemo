@@ -40,7 +40,7 @@ btn = [[types.InlineKeyboardButton(
         text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
 reply_markup = types.InlineKeyboardMarkup(btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
 
-    await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
+await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
     return
         
     markup = types.InlineKeyboardMarkup(
