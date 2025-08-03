@@ -41,7 +41,7 @@ btn = [[types.InlineKeyboardButton(
 reply_markup = types.InlineKeyboardMarkup(btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
 
 await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
-    return
+return
         
     markup = types.InlineKeyboardMarkup(
         [
