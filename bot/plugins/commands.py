@@ -6,6 +6,7 @@ from bot.database import group_db
 from bot import Bot
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid
 from bot.plugins.forcesub import force_sub_func
+from pyrogram.raw import functions, types as raw_types
 
 
 @Client.on_message(filters.command("start") & (filters.private | filters.group) & filters.incoming)
@@ -38,8 +39,8 @@ async def start(c: Bot, m: types.Message):
             except ValueError:
                 # This means it's likely a movie name from the /start command (link click)
                 movie_name = m.command[1]
-                # Trigger the existing search logic by sending the command *as the bot*
-                await c.send_message(m.chat.id, f"/start {movie_name}")
+                # Trigger the existing search logic DIRECTLY by calling the function
+                await start_movie_search(c, m, movie_name)
                 return
 
     else:  # len(m.command) == 1  (just /start)
@@ -56,6 +57,23 @@ async def start(c: Bot, m: types.Message):
         await m.reply_text(
             Script.START_MESSAGE, disable_web_page_preview=True, reply_markup=markup
         )
+
+async def start_movie_search(c: Bot, m: types.Message, movie_name: str):
+    """
+    Simulates the user typing the full command by constructing a new Message object.
+    """
+    # Construct a new message object that looks like the user typed the command
+    new_message = types.Message(
+        id=m.id + 1,  # Give it a new ID, must be unique
+        date=m.date,
+        chat=m.chat,
+        from_user=m.from_user,
+        text=f"/start {movie_name}", # This is the command we want to simulate
+        entities=[types.MessageEntity(type=enums.MessageEntityType.BOT_COMMAND, offset=0, length=len("/start"))], #Mark /start as a command
+        client=c # VERY IMPORTANT: Pass the client instance
+    )
+    #Manually call the start function
+    await start(c, new_message)
 
 
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
@@ -307,7 +325,7 @@ async def showid(client, message: types.Message):
         last = message.from_user.last_name or None
         username = message.from_user.username or None
         dc_id = message.from_user.dc_id or None
-        text = f"<b>➲ First Name:</b> {first}\n<b>➲ Last Name:</b> {last}\n<b>➲ Username:</b> {username}\n<b>➲ Telegram ID:</b> <code>{user_id}</code>\n<b>➲ Data Centre:</b> <code>{dc_id}</code>"
+        text = f"<b>âž² First Name:</b> {first}\n<b>âž² Last Name:</b> {last}\n<b>âž² Username:</b> {username}\n<b>âž² Telegram ID:</b> <code>{user_id}</code>\n<b>âž² Data Centre:</b> <code>{dc_id}</code>"
 
         await message.reply_text(
             text,
@@ -317,20 +335,20 @@ async def showid(client, message: types.Message):
     elif chat_type in [enums.ChatType.GROUP, enums.chat_type.SUPERGROUP]:
         _id = ""
         _id += (
-            "<b>➲ Chat ID</b>: "
+            "<b>âž² Chat ID</b>: "
             f"<code>{message.chat.id}</code>\n"
         )
         if message.reply_to_message:
             _id += (
-                "<b>➲ User ID</b>: "
+                "<b>âž² User ID</b>: "
                 f"<code>{message.from_user.id if message.from_user else 'Anonymous'}</code>\n"
-                "<b>➲ Replied User ID</b>: "
+                "<b>âž² Replied User ID</b>: "
                 f"<code>{message.reply_to_message.from_user.id if message.reply_to_message.from_user else 'Anonymous'}</code>\n"
             )
             file_info = get_file_id(message.reply_to_message)
         else:
             _id += (
-                "<b>➲ User ID</b>: "
+                "<b>âž² User ID</b>: "
                 f"<code>{message.from_user.id if message.from_user else 'Anonymous'}</code>\n"
             )
             file_info = get_file_id(message)
