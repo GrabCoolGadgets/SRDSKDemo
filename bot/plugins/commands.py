@@ -12,7 +12,7 @@ from bot.plugins.forcesub import force_sub_func
 async def start(c: Bot, m: types.Message):
     if Config.UPDATE_CHANNEL and await force_sub_func(c, Config.UPDATE_CHANNEL, m) is not True:
         return
-    
+
     if len(m.command) == 2:
         if "help" in m.command:
             s = Script.ADMIN_HELP_MESSAGE if m.from_user.id in Config.ADMINS else Script.USER_HELP_MESSAGE
@@ -23,7 +23,7 @@ async def start(c: Bot, m: types.Message):
         else:
             query = m.command[1]
             
-            # Yeh sahi jagah hai async for ka
+            # ✅ Search messages
             results = []
             async for msg in c.search_messages(chat_id=Config.DATABASE_CHANNEL, query=query, limit=1):
                 results.append(msg)
@@ -32,11 +32,19 @@ async def start(c: Bot, m: types.Message):
                 await m.reply("❌ No results found for your query.")
                 return
 
-            # Result mila to reply ya process karo
-            await m.reply(f"✅ Found: {results[0].text}")
+            # ✅ Result mila, abhi reply/send karo
+            chnl_msg = results[0]
+            caption = chnl_msg.caption or ""
+            caption = remove_mention(remove_link(caption))
+
+            btn = [[types.InlineKeyboardButton(
+                text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+            reply_markup = types.InlineKeyboardMarkup(btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+
+            await chnl_msg.copy(m.from_user.id, caption=caption, reply_markup=reply_markup)
             return
 
-    # Agar `/start` ke saath koi argument nahi diya to normal welcome bhejna
+    # ✅ Agar `/start` ke saath koi argument nahi diya to welcome
     markup = types.InlineKeyboardMarkup(
         [
             [
@@ -49,7 +57,6 @@ async def start(c: Bot, m: types.Message):
     await m.reply_text(
         Script.START_MESSAGE, disable_web_page_preview=True, reply_markup=markup
     )
-
 # Agar result mil gaya to yeh part chalega
 chnl_msg = results[0]
 caption = chnl_msg.caption
