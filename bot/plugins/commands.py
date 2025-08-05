@@ -43,29 +43,31 @@ async def start(c: Bot, m: types.Message):
                 return
 
         # ✅ If format: _keyword_-100chatid (Search)
-        elif cmd_arg.startswith("_") and cmd_arg.count("_") == 2:
-            try:
-                _, query, chat_id = cmd_arg.split("_")
-                query = query.strip()
-                chat_id = int(chat_id)
+        elif cmd_arg.startswith("_"):
+    parts = cmd_arg.split("_", 2)
+    if len(parts) == 3:
+        _, query, chat_id = parts
+        try:
+            query = query.strip()
+            chat_id = int(chat_id)
 
-                await m.reply(f"🔍 Searching for <b>{query}</b>...", parse_mode="html")
+            await m.reply(f"🔍 Searching for <b>{query}</b>...", parse_mode="html")
 
-                results = await c.search_messages(chat_id, query, limit=5)
-                if not results:
-                    await m.reply(f"❌ No results found for <b>{query}</b>", parse_mode="html")
-                    return
+            results = await c.search_messages(chat_id, query, limit=5)
+            if not results:
+                await m.reply(f"❌ No results found for <b>{query}</b>", parse_mode="html")
+                return
 
-                for msg in results:
-                    try:
-                        await msg.copy(m.chat.id)
-                    except:
-                        pass
+            for msg in results:
+                try:
+                    await msg.copy(m.chat.id)
+                except:
+                    pass
 
-            except Exception as e:
-                print(e)
-                await m.reply("❌ Invalid search format or failed to search.")
-            return
+        except Exception as e:
+            print("Search error:", e)
+            await m.reply("❌ Invalid chat ID or failed to search.")
+        return
 
         else:
             await m.reply("❌ Invalid start command format.")
