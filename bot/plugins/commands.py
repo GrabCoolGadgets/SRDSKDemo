@@ -12,28 +12,66 @@ from bot.plugins.forcesub import force_sub_func
 async def start(c: Bot, m: types.Message):
     if Config.UPDATE_CHANNEL and await force_sub_func(c, Config.UPDATE_CHANNEL, m) is not True:
         return
-    
+
+    # Agar command me argument hai
     if len(m.command) == 2:
-        if "help" in m.command:
+        cmd_arg = m.command[1]
+
+        # help command
+        if cmd_arg == "help":
             s = Script.ADMIN_HELP_MESSAGE if m.from_user.id in Config.ADMINS else Script.USER_HELP_MESSAGE
-            await m.reply_text(
-                s, disable_web_page_preview=True
-            )
+            await m.reply_text(s, disable_web_page_preview=True)
             return
+
+        # ✅ If format: file_66337_-1001502788198 (Send file)
+        elif cmd_arg.startswith("file_"):
+            try:
+                _, file_id, chat_id = cmd_arg.split("_")
+                chnl_msg = await c.get_messages(int(chat_id), int(file_id))
+                caption = chnl_msg.caption
+                caption = remove_mention(remove_link(caption))
+
+                btn = [[types.InlineKeyboardButton(
+                    text="🎯 Join Update Channel 🎯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
+                reply_markup = types.InlineKeyboardMarkup(btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
+
+                await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
+                return
+            except Exception as e:
+                print(e)
+                await m.reply("❌ Failed to fetch file.")
+                return
+
+        # ✅ If format: _keyword_-100chatid (Search)
+        elif cmd_arg.startswith("_") and cmd_arg.count("_") == 2:
+            try:
+                _, query, chat_id = cmd_arg.split("_")
+                query = query.strip()
+                chat_id = int(chat_id)
+
+                await m.reply(f"🔍 Searching for <b>{query}</b>...", parse_mode="html")
+
+                results = await c.search_messages(chat_id, query, limit=5)
+                if not results:
+                    await m.reply(f"❌ No results found for <b>{query}</b>", parse_mode="html")
+                    return
+
+                for msg in results:
+                    try:
+                        await msg.copy(m.chat.id)
+                    except:
+                        pass
+
+            except Exception as e:
+                print(e)
+                await m.reply("❌ Invalid search format or failed to search.")
+            return
+
         else:
-            _, file_id, chat_id = m.command[1].split("_")
+            await m.reply("❌ Invalid start command format.")
+            return
 
-            chnl_msg = await c.get_messages(int(chat_id), int(file_id))
-            caption = chnl_msg.caption
-            caption = remove_mention(remove_link(caption))
-            btn = [[types.InlineKeyboardButton(
-                text="ðŸŽ¯ Join Update Channel ðŸŽ¯", url=Config.FILE_HOW_TO_DOWNLOAD_LINK)]]
-
-            reply_markup = types.InlineKeyboardMarkup(
-                btn) if Config.FILE_HOW_TO_DOWNLOAD_LINK else None
-            await chnl_msg.copy(m.from_user.id, caption, reply_markup=reply_markup)
-        return
-        
+    # ✅ Default start message
     markup = types.InlineKeyboardMarkup(
         [
             [
@@ -43,7 +81,7 @@ async def start(c: Bot, m: types.Message):
             [types.InlineKeyboardButton(text="Close", callback_data="delete")],
         ]
     )
-    
+
     await m.reply_text(
         Script.START_MESSAGE, disable_web_page_preview=True, reply_markup=markup
     )
