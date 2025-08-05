@@ -43,7 +43,19 @@ async def start(c: Bot, m: types.Message):
                 return
 
         # ✅ If format: _keyword_-100chatid (Search)
-        elif cmd_arg.startswith("_"):
+        
+        else:
+            await m.reply("❌ Invalid start command format.")
+            return
+
+    # ✅ Default start message
+    markup = types.InlineKeyboardMarkup(
+        [
+            [
+                types.InlineKeyboardButton(text="Help", callback_data="help"),
+                types.InlineKeyboardButton(text="About", callback_data="about"),
+            ],
+elif cmd_arg.startswith("_"):
     parts = cmd_arg.split("_", 2)
     if len(parts) == 3:
         _, query, chat_id = parts
@@ -67,20 +79,7 @@ async def start(c: Bot, m: types.Message):
         except Exception as e:
             print("Search error:", e)
             await m.reply("❌ Invalid chat ID or failed to search.")
-        return
-
-        else:
-            await m.reply("❌ Invalid start command format.")
-            return
-
-    # ✅ Default start message
-    markup = types.InlineKeyboardMarkup(
-        [
-            [
-                types.InlineKeyboardButton(text="Help", callback_data="help"),
-                types.InlineKeyboardButton(text="About", callback_data="about"),
-            ],
-            [types.InlineKeyboardButton(text="Close", callback_data="delete")],
+        return            [types.InlineKeyboardButton(text="Close", callback_data="delete")],
         ]
     )
 
