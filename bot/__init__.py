@@ -6,7 +6,6 @@ from pyrogram import Client
 from aiohttp import web
 from bot.config import Config
 from telegraph.aio import Telegraph
-import movie_search_start_link
 
 
 # Get logging configurations
