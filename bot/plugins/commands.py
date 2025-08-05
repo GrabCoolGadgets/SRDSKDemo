@@ -7,23 +7,19 @@ from bot import Bot
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid
 from bot.plugins.forcesub import force_sub_func
 
-
 @Client.on_message(filters.command("start") & (filters.private | filters.group) & filters.incoming)
 async def start(c: Bot, m: types.Message):
     if Config.UPDATE_CHANNEL and await force_sub_func(c, Config.UPDATE_CHANNEL, m) is not True:
         return
 
-    # Agar command me argument hai
     if len(m.command) == 2:
         cmd_arg = m.command[1]
 
-        # help command
         if cmd_arg == "help":
             s = Script.ADMIN_HELP_MESSAGE if m.from_user.id in Config.ADMINS else Script.USER_HELP_MESSAGE
             await m.reply_text(s, disable_web_page_preview=True)
             return
 
-        # ✅ If format: file_66337_-1001502788198 (Send file)
         elif cmd_arg.startswith("file_"):
             try:
                 _, file_id, chat_id = cmd_arg.split("_")
@@ -42,44 +38,44 @@ async def start(c: Bot, m: types.Message):
                 await m.reply("❌ Failed to fetch file.")
                 return
 
-        # ✅ If format: _keyword_-100chatid (Search)
-        
+        elif cmd_arg.startswith("_"):
+            parts = cmd_arg.split("_", 2)
+            if len(parts) == 3:
+                _, query, chat_id = parts
+                try:
+                    query = query.strip()
+                    chat_id = int(chat_id)
+
+                    await m.reply(f"🔍 Searching for <b>{query}</b>...", parse_mode="html")
+
+                    results = await c.search_messages(chat_id, query, limit=5)
+                    if not results:
+                        await m.reply(f"❌ No results found for <b>{query}</b>", parse_mode="html")
+                        return
+
+                    for msg in results:
+                        try:
+                            await msg.copy(m.chat.id)
+                        except:
+                            pass
+
+                except Exception as e:
+                    print("Search error:", e)
+                    await m.reply("❌ Invalid chat ID or failed to search.")
+                return
+
         else:
             await m.reply("❌ Invalid start command format.")
             return
 
-    # ✅ Default start message
+    # Default start
     markup = types.InlineKeyboardMarkup(
         [
             [
                 types.InlineKeyboardButton(text="Help", callback_data="help"),
                 types.InlineKeyboardButton(text="About", callback_data="about"),
             ],
-elif cmd_arg.startswith("_"):
-    parts = cmd_arg.split("_", 2)
-    if len(parts) == 3:
-        _, query, chat_id = parts
-        try:
-            query = query.strip()
-            chat_id = int(chat_id)
-
-            await m.reply(f"🔍 Searching for <b>{query}</b>...", parse_mode="html")
-
-            results = await c.search_messages(chat_id, query, limit=5)
-            if not results:
-                await m.reply(f"❌ No results found for <b>{query}</b>", parse_mode="html")
-                return
-
-            for msg in results:
-                try:
-                    await msg.copy(m.chat.id)
-                except:
-                    pass
-
-        except Exception as e:
-            print("Search error:", e)
-            await m.reply("❌ Invalid chat ID or failed to search.")
-        return            [types.InlineKeyboardButton(text="Close", callback_data="delete")],
+            [types.InlineKeyboardButton(text="Close", callback_data="delete")],
         ]
     )
 
