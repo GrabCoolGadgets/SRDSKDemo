@@ -8,7 +8,7 @@ from bot.database import group_db
 
 
 
-@Client.on_message(filters.text & (filters.private | filters.group) & filters.incoming)
+#@Client.on_message(filters.text & (filters.private | filters.group) & filters.incoming)
 async def pm_filter(c, m: t.Message):
     
     free_group = True
