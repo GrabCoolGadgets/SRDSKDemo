@@ -8,7 +8,7 @@ from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid
 from bot.plugins.forcesub import force_sub_func
 
 
-@Client.on_message(filters.command("start") & (filters.private | filters.group) & filters.incoming)
+@Client.on_message(filters.command("start") & (filters.private | filters.group) & filters.incoming, group=2)
 async def start(c: Bot, m: types.Message):
     if Config.UPDATE_CHANNEL and await force_sub_func(c, Config.UPDATE_CHANNEL, m) is not True:
         return
