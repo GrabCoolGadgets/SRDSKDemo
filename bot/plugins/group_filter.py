@@ -9,13 +9,7 @@ from bot.database import group_db
 
 
 @Client.on_message(filters.text & (filters.private | filters.group) & filters.incoming)
-@Client.on_message(filters.text & (filters.private | filters.group) & filters.incoming)
 async def pm_filter(c, m: t.Message):
-
-    # 🛑 Block all private messages except owner
-    if m.chat.type == enums.chat_type.ChatType.PRIVATE:
-        if m.from_user.id != Config.OWNER_ID:
-            return  # ignore messages from other users in PM
     
     free_group = True
     if m.chat.type in [enums.chat_type.ChatType.SUPERGROUP, enums.chat_type.ChatType.GROUP]:
@@ -80,7 +74,7 @@ async def pm_filter(c, m: t.Message):
             link = 0
             if free_group or is_shortener:
                 bot_username = c.username.replace("@", "")
-                link_temp = f"https://ipfiles.pages.dev?start=file_"
+                link_temp = f"https://telegram.dog/{bot_username}?start=file_"
                 link = None
                 if result.document or result.video:
                     title = remove_mention(remove_link(title))
@@ -118,7 +112,7 @@ async def pm_filter(c, m: t.Message):
             [
                 [
                     t.InlineKeyboardButton(
-                        "🎯 Join Update Channel 🎯",
+                        "How to Download?",
                         url=Config.RESULTS_HOW_TO_DOWNLOAD_LINK,
                     ),
                 ],
@@ -168,4 +162,4 @@ async def not_found_response(m, query):
         Script.NO_REPLY_TEXT.format(query),
         disable_web_page_preview=0,
         reply_markup=reply_markup,
-    )
+            )
